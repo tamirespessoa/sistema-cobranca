@@ -1,0 +1,301 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OPERADOR
+  FINANCEIRO
+}
+
+enum DebtorStatus {
+  ATIVO
+  EM_NEGOCIACAO
+  QUITADO
+  INADIMPLENTE
+}
+
+enum DebtStatus {
+  ABERTA
+  VENCIDA
+  PARCIALMENTE_PAGA
+  QUITADA
+  NEGATIVADA
+  CANCELADA
+}
+
+enum PaymentMethod {
+  PIX
+  BOLETO
+  DINHEIRO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  TRANSFERENCIA
+  OUTRO
+}
+
+enum PaymentStatus {
+  PENDENTE
+  CONFIRMADO
+  CANCELADO
+  ESTORNADO
+}
+
+enum PixStatus {
+  CRIADO
+  AGUARDANDO_PAGAMENTO
+  PAGO
+  EXPIRADO
+  CANCELADO
+}
+
+enum NotificationType {
+  LEMBRETE_VENCIMENTO
+  COBRANCA_VENCIDA
+  CONFIRMACAO_PAGAMENTO
+  ENVIO_RECIBO
+  AVISO_NEGATIVACAO
+}
+
+enum NotificationStatus {
+  PENDENTE
+  ENVIADA
+  ERRO
+}
+
+enum NegativeStatus {
+  NAO_APLICAVEL
+  APTO_PARA_NEGATIVACAO
+  AVISO_ENVIADO
+  NEGATIVADO
+  REMOVIDO
+  CANCELADO
+}
+
+model User {
+  id       String   @id @default(cuid())
+  name     String
+  email    String   @unique
+  password String
+  role     UserRole @default(OPERADOR)
+  active   Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debtsCreated Debt[] @relation("DebtCreatedBy")
+}
+
+model Debtor {
+  id String @id @default(cuid())
+
+  fullName String
+  rg       String?
+  cpf      String  @unique
+  phone    String?
+  whatsapp String?
+  email    String?
+
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  zipCode      String?
+
+  status DebtorStatus @default(ATIVO)
+  notes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debts Debt[]
+}
+
+model Creditor {
+  id String @id @default(cuid())
+
+  name     String
+  document String?
+  phone    String?
+  whatsapp String?
+  email    String?
+
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  zipCode      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debts Debt[]
+}
+
+model Debt {
+  id String @id @default(cuid())
+
+  debtorId    String
+  creditorId  String?
+  createdById String?
+
+  description    String
+  originalAmount Decimal  @db.Decimal(10, 2)
+  currentAmount  Decimal  @db.Decimal(10, 2)
+  dueDate        DateTime
+
+  paymentMethod PaymentMethod?
+  status        DebtStatus     @default(ABERTA)
+
+  installmentNumber Int?
+  totalInstallments Int?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debtor    Debtor    @relation(fields: [debtorId], references: [id])
+  creditor  Creditor? @relation(fields: [creditorId], references: [id])
+  createdBy User?     @relation("DebtCreatedBy", fields: [createdById], references: [id])
+
+  payments          Payment[]
+  receipts          Receipt[]
+  pixCharges        PixCharge[]
+  notifications     WhatsappNotification[]
+  negativeRecords   NegativeRecord[]
+  reminderHistories ReminderHistory[]
+}
+
+model Payment {
+  id String @id @default(cuid())
+
+  debtId String
+
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentDate   DateTime      @default(now())
+  paymentMethod PaymentMethod
+  status        PaymentStatus @default(CONFIRMADO)
+
+  transactionCode String?
+  notes           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debt    Debt     @relation(fields: [debtId], references: [id])
+  receipt Receipt?
+}
+
+model Receipt {
+  id String @id @default(cuid())
+
+  debtId    String
+  paymentId String @unique
+
+  receiptNumber String  @unique
+  fileUrl       String?
+
+  issuedAt DateTime @default(now())
+
+  debt    Debt    @relation(fields: [debtId], references: [id])
+  payment Payment @relation(fields: [paymentId], references: [id])
+}
+
+model PixCharge {
+  id String @id @default(cuid())
+
+  debtId String
+
+  amount Decimal @db.Decimal(10, 2)
+
+  pixKey        String?
+  qrCode        String?
+  copyPasteCode String?
+
+  externalId String?
+  status     PixStatus @default(CRIADO)
+
+  expiresAt DateTime?
+  paidAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debt Debt @relation(fields: [debtId], references: [id])
+}
+
+model WhatsappNotification {
+  id String @id @default(cuid())
+
+  debtId String
+
+  type   NotificationType
+  status NotificationStatus @default(PENDENTE)
+
+  phone   String
+  message String
+
+  sentAt DateTime?
+  error  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debt Debt @relation(fields: [debtId], references: [id])
+}
+
+model NegativeRecord {
+  id String @id @default(cuid())
+
+  debtId String
+
+  status NegativeStatus @default(NAO_APLICAVEL)
+
+  warningSentAt DateTime?
+  negativeAt    DateTime?
+  removedAt     DateTime?
+
+  protocol String?
+  notes    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debt Debt @relation(fields: [debtId], references: [id])
+}
+
+model ReminderHistory {
+  id String @id @default(cuid())
+
+  debtId String
+  debt   Debt   @relation(fields: [debtId], references: [id])
+
+  channel String
+  tone    String
+
+  message String
+
+  status String @default("ENVIADO")
+
+  createdAt DateTime @default(now())
+}
+
+model AutomationSetting {
+  id                 String   @id @default(cuid())
+  automaticReminders Boolean  @default(true)
+  automaticEmail     Boolean  @default(false)
+  runHour            Int      @default(8)
+  runMinute          Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
