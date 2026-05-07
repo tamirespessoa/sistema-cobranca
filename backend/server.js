@@ -34,10 +34,23 @@ dotenv.config();
 const app = express();
 
 // =========================
+// CORS
+// =========================
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://sistema-cobranca-psi.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+// =========================
 // MIDDLEWARES
 // =========================
-app.use(cors());
 app.use(express.json());
+
 app.use("/uploads", express.static("uploads"));
 
 // =========================
@@ -61,27 +74,40 @@ app.get("/health", (req, res) => {
 });
 
 // =========================
-// ROTAS DA API
+// ROTAS
 // =========================
 app.use("/auth", authRoutes);
+
 app.use("/protected", protectedRoutes);
+
 app.use("/debtors", debtorRoutes);
+
 app.use("/debts", debtRoutes);
+
 app.use("/payments", paymentRoutes);
+
 app.use("/dashboard", dashboardRoutes);
+
 app.use("/pix", pixRoutes);
+
 app.use("/negative", negativeRoutes);
+
 app.use("/users", userRoutes);
+
 app.use("/reports", reportRoutes);
+
 app.use("/charges", chargeRoutes);
+
 app.use("/ai", aiRoutes);
+
 app.use("/reminder-history", reminderHistoryRoutes);
+
 app.use("/email", emailRoutes);
+
 app.use("/automation-settings", automationSettingRoutes);
 
 // =========================
-// AGENDADOR AUTOMÁTICO
-// TODOS OS DIAS ÀS 08:00
+// CRON AUTOMÁTICO
 // =========================
 cron.schedule("0 8 * * *", async () => {
   console.log("🚀 Executando lembretes automáticos");
