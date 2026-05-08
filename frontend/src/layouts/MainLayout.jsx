@@ -59,6 +59,12 @@ function MainLayout({ children }) {
             />
 
             <MenuItem
+              active={isActive("/acordos")}
+              to="/acordos"
+              label="Acordos"
+            />
+
+            <MenuItem
               active={isActive("/devedores")}
               to="/devedores"
               label="Devedores"

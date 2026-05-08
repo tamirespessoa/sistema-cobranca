@@ -20,6 +20,7 @@ import Reports from "./pages/Reports";
 import Reminders from "./pages/Reminders";
 import ReminderHistory from "./pages/ReminderHistory";
 import AutomationSettings from "./pages/AutomationSettings";
+import Agreements from "./pages/Agreements";
 
 function getUser() {
   try {
@@ -70,6 +71,15 @@ function App() {
           element={
             <PrivateRoute>
               <Charges />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/acordos"
+          element={
+            <PrivateRoute>
+              <Agreements />
             </PrivateRoute>
           }
         />

@@ -21,6 +21,7 @@ const aiRoutes = require("./src/routes/ai.routes");
 const reminderHistoryRoutes = require("./src/routes/reminderHistory.routes");
 const emailRoutes = require("./src/routes/email.routes");
 const automationSettingRoutes = require("./src/routes/automationSetting.routes");
+const agreementRoutes = require("./src/routes/agreement.routes");
 
 // =========================
 // SERVIÇOS
@@ -41,8 +42,18 @@ app.use(cors({
     "http://localhost:5173",
     "https://sistema-cobranca-psi.vercel.app"
   ],
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS"
+  ],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization"
+  ],
   credentials: true
 }));
 
@@ -106,13 +117,24 @@ app.use("/email", emailRoutes);
 
 app.use("/automation-settings", automationSettingRoutes);
 
+app.use("/agreements", agreementRoutes);
+
 // =========================
 // CRON AUTOMÁTICO
 // =========================
 cron.schedule("0 8 * * *", async () => {
   console.log("🚀 Executando lembretes automáticos");
 
-  await processAutomaticReminders();
+  try {
+    await processAutomaticReminders();
+
+    console.log("✅ Lembretes automáticos executados");
+  } catch (error) {
+    console.error(
+      "❌ Erro ao executar lembretes automáticos:",
+      error
+    );
+  }
 });
 
 // =========================
