@@ -323,4 +323,25 @@ model Agreement {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  installmentItems AgreementInstallment[]
+}
+
+model AgreementInstallment {
+  id String @id @default(cuid())
+
+  agreementId String
+  agreement   Agreement @relation(fields: [agreementId], references: [id])
+
+  installmentNumber Int
+  amount            Decimal  @db.Decimal(10, 2)
+  dueDate           DateTime
+
+  status String @default("PENDENTE")
+
+  paidAt DateTime?
+  notes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
