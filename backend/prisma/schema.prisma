@@ -27,6 +27,7 @@ enum DebtStatus {
   QUITADA
   NEGATIVADA
   CANCELADA
+  EM_NEGOCIACAO
 }
 
 enum PaymentMethod {
@@ -174,6 +175,7 @@ model Debt {
   notifications     WhatsappNotification[]
   negativeRecords   NegativeRecord[]
   reminderHistories ReminderHistory[]
+  agreements        Agreement[]
 }
 
 model Payment {
@@ -291,11 +293,34 @@ model ReminderHistory {
 }
 
 model AutomationSetting {
-  id                 String   @id @default(cuid())
-  automaticReminders Boolean  @default(true)
-  automaticEmail     Boolean  @default(false)
-  runHour            Int      @default(8)
-  runMinute          Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                 String  @id @default(cuid())
+  automaticReminders Boolean @default(true)
+  automaticEmail     Boolean @default(false)
+  runHour            Int     @default(8)
+  runMinute          Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Agreement {
+  id String @id @default(cuid())
+
+  debtId String
+  debt   Debt   @relation(fields: [debtId], references: [id])
+
+  originalAmount   Decimal @db.Decimal(10, 2)
+  negotiatedAmount Decimal @db.Decimal(10, 2)
+
+  installments Int @default(1)
+
+  agreementDate DateTime  @default(now())
+  firstDueDate  DateTime?
+
+  status String @default("ATIVO")
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
